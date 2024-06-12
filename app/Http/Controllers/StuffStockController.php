@@ -192,7 +192,7 @@ class StuffStockController extends Controller
             $getStuffStock = StuffStock::find($id);
 
             if(!$getStuffStock) {
-                return ApiFormatter::sendResponse(404, false, 'data stuff stock not found');
+                return ApiFormatter::sendResponse(404, 'data stuff stock not found');
             } else {
                 $this->validate($request, [
                     'total_available' => 'required',
@@ -207,7 +207,7 @@ class StuffStockController extends Controller
                 if($addStock){
                     $getStockAdded = StuffStock::where('id', $id)->with('stuff')->first();
 
-                    return ApiFormatter::sendResponse(200, true, 'Successfully add a stock of stuff stock data', $getStockAdded);
+                    return ApiFormatter::sendResponse(200, 'Successfully add a stock of stuff stock data', $getStockAdded);
                 }
             }
         }catch (\Exception $err) {
@@ -221,7 +221,7 @@ class StuffStockController extends Controller
              $getStuffStock = StuffStock::find($id);
 
              if (!$getStuffStock) {
-                return ApiFormatter::sendResponse(400, false, 'Data Stuff Stock Not Found');
+                return ApiFormatter::sendResponse(400, 'Data Stuff Stock Not Found');
              } else {
                 $this->validate($request, [
                     'total_available' => 'required',
@@ -232,7 +232,7 @@ class StuffStockController extends Controller
                 $isStockDefec = $getStuffStock->update['total_defec'] - $request->total_defec;
 
                 if ($isStockAvailable < 0 || $isStockdefec < 0) {
-                    return ApiFormatter::sendResponse(400, true, 'Substraction Stock Cant Less Than A Stock Stored');
+                    return ApiFormatter::sendResponse(400, 'Substraction Stock Cant Less Than A Stock Stored');
                 } else {
                     $subStock = $getStuffStock->update([
                         'total_available' => $isStockAvailable,
@@ -242,13 +242,18 @@ class StuffStockController extends Controller
                     if ($subStock) {
                         $getStockSub = StuffStock::where('id', $id)->with('stuff')->first();
 
-                        return ApiFormatter::sendResponse(200, true, 'Succesfully Sub A Stock Of StuFf Stock Data', $getStockSub);
+                        return ApiFormatter::sendResponse(200, 'Succesfully Sub A Stock Of StuFf Stock Data', $getStockSub);
                     }
                 }
              }
         }catch(\Exception $err){
             return ApiFormatter::sendResponse(400, $err->getMessage());
         }
+    }
+
+    public function __construct()
+    {
+        $this->middleware('auth:api');
     }
     
 }

@@ -41,7 +41,8 @@ class Authenticate
                     'code' => 401,
                     'success' => false,
                     'message' => 'Unauthorized',
-                ]
+                ],
+                401
             );
 
             //ubah formay menjadi seperto berikut untuk user yang mencoba api tanpa login

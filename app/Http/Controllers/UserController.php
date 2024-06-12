@@ -48,7 +48,7 @@ class UserController extends Controller
             $this->validate($request, [
             'username' => 'required|min:3',
             'email' => 'required|email:dns',
-            'password' =>'required',
+            'password' =>'required',    
             'role' => 'required',
             ]);
 
@@ -113,18 +113,25 @@ class UserController extends Controller
             $this->validate($request, [
             'username' => 'required|min:3',
             'email' => 'required|email:dns',
-            'password' =>'required',
             'role' => 'required',
             ]);
 
             $password = substr($request->email, 0, 3) . substr($request->username, 0, 3);
-
-            $checkProses = User::where('id', $id)->update([
-                'username' => $request->username,
-                'email' => $request->email,
-                'password' => Hash::make($password),
-                'role' => $request->role,
-            ]);
+            if($request->password){
+                $checkProses = User::where('id', $id)->update([
+                    'username' => $request->username,
+                    'email' => $request->email,
+                    'password' => Hash::make($password),
+                    'role' => $request->role,
+                ]);
+            }else{
+                $checkProses = User::where('id', $id)->update([
+                    'username' => $request->username,
+                    'email' => $request->email,
+                    'role' => $request->role,
+                ]);
+            }
+            
 
             if ($checkProses) {
                 $data = User::find($id);
@@ -264,5 +271,10 @@ class UserController extends Controller
         } catch(\Exception $e) {
             return ApiFormatter::sendResponse(400, false, $e->getMessage());
         }
+    }
+
+    public function __construct()
+    {
+        $this->middleware('auth:api');
     }
 }

@@ -17,7 +17,7 @@ class StuffController extends Controller
     {
         try{
             //ambil data yg mau ditampilkan
-            $data = Stuff::all()->toArray();
+            $data = Stuff::with('inboundStuffs', 'lendings', 'stuffStock') ->orderBy('updated_at', 'DESC')->get()->toArray();
 
             return ApiFormatter::sendResponse(200, 'success', $data);
         } catch (Exception $err) { //exceotion adalah objek yang menjelaskan kesalahan atau perilaku tak terduga dari skrip php
@@ -71,7 +71,7 @@ class StuffController extends Controller
     public function show($id)
     {
         try {
-            $data = Stuff::where('id', $id)->first();
+            $data = Stuff::where('id', $id)->with('stuffStock', 'inboundStuffs', 'lendings')->first();
 
             if(is_null($data)){
                 return ApiFormatter::sendResponse(400, 'bad request', 'Data not found!');
@@ -135,9 +135,17 @@ class StuffController extends Controller
     public function destroy($id)
     {
         try {
-            $checkProses = Stuff::where('id', $id)->delete();
 
-            return ApiFormatter::sendResponse(200, 'success', 'Data stuff berhasil dihapus');
+
+            $checkProses = Stuff::where('id', $id)->first();
+            if (!isset($checkProses-> inboundStuffs) || !isset($checkProses-> lendings) || !isset($checkProses-> stuffStock)) {
+                $checkProses->delete();
+                return ApiFormatter::sendResponse(200, 'success', 'Data stuff berhasil dihapus');
+            }else{
+                return ApiFormatter::sendResponse(404, 'Data Lending Sudah Memiliki inbound stuff, lending, stuff stock');
+            }
+
+            
         } catch (\Exception $err) {
             return ApiFormatter::sendResponse(400, 'bad request', $err->getMessage());
         }
@@ -153,7 +161,7 @@ class StuffController extends Controller
             return ApiFormatter::sendResponse(400, 'bad request', $err->getMessage());
         }
     }
-
+    
     public function restore($id)
     {
         try{
@@ -180,5 +188,10 @@ class StuffController extends Controller
         } catch (\Exception $err) {
             return ApiFormatter::sendResponse(400, 'bad request', $err->getMessage());
         }
+    }
+
+    public function __construct()
+    {
+        $this->middleware('auth:api');
     }
 }

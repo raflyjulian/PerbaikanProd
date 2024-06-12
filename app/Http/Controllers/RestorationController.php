@@ -2,7 +2,10 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\ApiFormatter;
 use App\Models\Restoration;
+use App\Models\Lending;
+use App\Models\StuffStock;
 use Illuminate\Http\Request;
 
 class RestorationController extends Controller
@@ -35,7 +38,45 @@ class RestorationController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        try{
+            $this->validate($request, [
+                'user_id' => 'required',
+                'lending_id' => 'required',
+                'date_time' => 'required',
+                'total_good_stuff' => 'required',
+                'total_defec_stuff' => 'required',
+            ]);
+
+            $getLending = Lending::where('id', $request->lending_id)->first();//get data peminjam yg sesuia dngn pengembaliannya
+
+            $totalStuff = $request->total_good_stuff + $request->total_defec_stuff;
+            // variabel penampung jumlah barang yang akan dikembalikan
+
+            if($getLending['total_stuff'] != $totalStuff) { //pengecekan apakah jumlah barang yg di pinjam jumlahnya sama atau tidak
+                return ApiFormatter::sendResponse(400, 'the amount of items returned does not match the amount borrowed');
+            }else{
+                $getStuffStock = StuffStock::where('stuff_id', $getLending['stuff_id'])->first();//get data stuff stock yg barangnya sedang di pinjam
+
+                $createRestoration = Restoration::create([ // tambah data restoration
+                    'user_id' => $request->user_id,
+                    'lending_id' => $request->lending_id,
+                    'date_time' => $request->date_time,
+                    'total_good_stuff' => $request->total_good_stuff,
+                    'total_defec_stuff' => $request->total_defec_stuff,
+                ]);
+
+                $updateStock = $getStuffStock->update([
+                    'total_available' => $getStuffStock['total_available'] + $request->total_good_stuff,
+                    'total_defec' => $getStuffStock['total_defec'] + $request->total_defec_stuff,
+                ]);// update jumlah barang yg tersedia yg di tambah dngn jumlah brnng bagus yg dikembalikan. dan update jumlah brng yg rusak ditambah dngn jmlh brng rusak yg dikembalikaln
+
+                if($createRestoration && $updateStock){
+                    return ApiFormatter::sendResponse(200, 'successfully Create A Restoration Data', $createRestoration);
+                }
+            }
+        }catch(\Exception $e){
+            return APiFormatter::sendResponse(400, $e->getMessage());
+        }
     }
 
     /**
@@ -81,5 +122,10 @@ class RestorationController extends Controller
     public function destroy(Restoration $restoration)
     {
         //
+    }
+
+    public function __construct()
+    {
+        $this->middleware('auth:api');
     }
 }
